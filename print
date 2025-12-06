@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>阳光像素卡片机</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-sunny: #fdf6e3;
+            --machine-plastic: #eee8d5;
+            --machine-accent: #cb4b16;
+            --pixel-text: #657b83;
+            --paper-base: #fdf6e3;
+        }
+
+        body {
+            /* 阳光明媚的复古背景 */
+            background-color: var(--bg-sunny);
+            background-image: 
+                radial-gradient(circle at 50% 0%, rgba(255,255,240, 0.8) 0%, rgba(255,220,150, 0.2) 60%, rgba(0,0,0,0.1) 100%),
+                linear-gradient(45deg, #eee8d5 25%, transparent 25%, transparent 75%, #eee8d5 75%, #eee8d5),
+                linear-gradient(45deg, #eee8d5 25%, transparent 25%, transparent 75%, #eee8d5 75%, #eee8d5);
+            background-size: 100% 100%, 20px 20px, 20px 20px;
+            background-position: 0 0, 0 0, 10px 10px;
+            
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            /* 全局像素字体设置 */
+            font-family: 'Press Start 2P', monospace; 
+            overflow: hidden;
+            color: var(--pixel-text);
+            image-rendering: pixelated; /* 强制像素化渲染 */
+        }
+
+        /* --- 8-bit 风格机器 --- */
+        .printer-machine {
+            background: var(--machine-plastic);
+            /* 像素风格边框阴影 */
+            box-shadow: 
+                inset -4px -4px 0px #b58900,
+                inset 4px 4px 0px #ffffff,
+                4px 4px 0px rgba(0,0,0,0.2);
+            padding: 25px;
+            width: 420px;
+            max-width: 95%;
+            position: relative;
+            z-index: 20;
+            border: 4px solid #657b83;
+        }
+
+        .machine-label {
+            text-align: center;
+            color: var(--machine-accent);
+            font-size: 1rem;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 0px #eee8d5, 4px 4px 0px rgba(0,0,0,0.1);
+            letter-spacing: 2px;
+        }
+
+        .input-area {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            background: #93a1a1;
+            padding: 15px;
+            border: 4px solid #657b83;
+            box-shadow: inset 4px 4px 0px rgba(0,0,0,0.3);
+        }
+
+        textarea {
+            background-color: #002b36; /* 深色屏幕感 */
+            color: #859900; /* 绿色像素字 */
+            border: 4px solid #657b83;
+            padding: 10px;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 0.8rem;
+            resize: none;
+            height: 80px;
+            outline: none;
+            image-rendering: pixelated;
+        }
+
+        /* 像素按钮 */
+        .print-btn {
+            background: var(--machine-accent);
+            border: 4px solid #073642;
+            padding: 10px 0;
+            color: #fdf6e3;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 1rem;
+            cursor: pointer;
+            box-shadow: 
+                inset -4px -4px 0px #8c330e,
+                inset 4px 4px 0px #ff6e3a,
+                4px 4px 0px #000;
+            position: relative;
+            top: 0;
+            left: 0;
+            transition: all 0.1s;
+        }
+
+        .print-btn:active {
+            top: 4px;
+            left: 4px;
+            box-shadow: 
+                inset -2px -2px 0px #8c330e,
+                inset 2px 2px 0px #ff6e3a,
+                0px 0px 0px #000;
+        }
+
+        /* --- 出卡槽 --- */
+        .slot-container {
+            margin-top: 25px;
+            position: relative;
+            width: 350px;
+            height: 24px;
+            background: #000;
+            border-bottom: 4px solid #657b83;
+            z-index: 15;
+        }
+        
+        #card-output-area {
+            position: relative;
+            width: 100%;
+            height: 0;
+            display: flex;
+            justify-content: center;
+            z-index: 5;
+        }
+
+        /* --- 像素复古卡片基础样式 --- */
+        .retro-card {
+            width: 280px;
+            min-height: 160px;
+            padding: 20px;
+            box-sizing: border-box;
+            
+            /* 像素化边框和阴影 */
+            border: 4px solid #657b83;
+            box-shadow: 6px 6px 0px rgba(0,0,0,0.2);
+            
+            /* 字体样式 - 模拟点阵打印机 */
+            font-family: monospace; /* 中文回退到等宽 */
+            font-size: 14px;
+            line-height: 1.5;
+            color: #333;
+            /* CSS技巧：模拟低分辨率点阵文字效果 */
+            text-shadow: 1px 1px 0px rgba(0,0,0,0.2);
+            font-smooth: never;
+            -webkit-font-smoothing: none;
+
+            position: absolute;
+            top: -180px; /* 初始隐藏在机器里 */
+            transform-origin: center center;
+            touch-action: none;
+            user-select: none;
+        }
+        
+        /* 卡片内容区域，用于区分拖拽手柄 */
+        .card-content {
+            cursor: grab;
+            width: 100%;
+            height: 100%;
+        }
+        .card-content:active {
+            cursor: grabbing;
+        }
+
+        /* --- 卡片多样性变体 --- */
+        /* 变体1：标准泛黄 */
+        .card-style-1 {
+            background-color: #fdf6e3;
+            background-image: url("data:image/svg+xml,%3Csvg width='4px' height='4px' viewBox='0 0 4 4' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23d4c8b4' fill-opacity='0.4'%3E%3Crect x='0' y='0' width='1' height='1'/%3E%3Crect x='2' y='2' width='1' height='1'/%3E%3C/g%3E%3C/svg%3E");
+        }
+        /* 变体2：旧报纸灰 */
+        .card-style-2 {
+            background-color: #eee8d5;
+            border-color: #586e75;
+            color: #073642;
+             background-image: url("data:image/svg+xml,%3Csvg width='6px' height='6px' viewBox='0 0 6 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%2393a1a1' fill-opacity='0.3'%3E%3Cpath d='M0 0h1v1H0zM2 2h1v1H2zM4 4h1v1H4z'/%3E%3C/g%3E%3C/svg%3E");
+        }
+        /* 变体3：暖色污渍 */
+        .card-style-3 {
+            background-color: #fce8c3;
+            border-color: #cb4b16;
+            color: #6c4c08;
+            background-image: radial-gradient(circle at 20% 30%, rgba(203, 75, 22, 0.1) 0%, transparent 50%),
+                              radial-gradient(circle at 80% 80%, rgba(181, 137, 0, 0.15) 0%, transparent 40%);
+        }
+
+
+        /* --- 旋转手柄 --- */
+        .rotate-handle {
+            position: absolute;
+            bottom: 5px;
+            right: 5px;
+            width: 30px;
+            height: 30px;
+            background: var(--machine-accent);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 16px;
+            cursor: move; /* 提示可以拖动旋转 */
+            border: 3px solid #073642;
+            box-shadow: inset 2px 2px 0 rgba(255,255,255,0.3);
+            z-index: 10;
+        }
+        .rotate-handle:hover {
+             background: #e05e26;
+        }
+
+
+        /* 打印动画 */
+        @keyframes printEjectPixel {
+            0% { top: -180px; }
+            20% { top: -180px; } /* 停顿一下 */
+            40% { top: 0px; }
+            100% { top: 60px; }
+        }
+
+        .printing {
+            animation: printEjectPixel 1.2s steps(10, end) forwards; /* steps让动画有卡顿的像素感 */
+        }
+
+        .status-text {
+            text-align: center;
+            color: var(--machine-accent);
+            height: 20px;
+            margin-top: 15px;
+            font-size: 0.8rem;
+            visibility: hidden;
+        }
+        .status-text.active {
+            visibility: visible;
+            animation: blink 0.5s step-end infinite alternate;
+        }
+        @keyframes blink { 50% { opacity: 0; } }
+
+    </style>
+</head>
+<body>
+
+    <div class="printer-machine">
+        <div class="machine-label">PIXEL-PRINTER 8000</div>
+        
+        <div class="input-area">
+            <textarea id="textInput" placeholder="INPUT MESSAGE..."></textarea>
+            <button class="print-btn" onclick="printCard()">PRINT</button>
+        </div>
+        <div class="status-text" id="statusText">PRINTING...</div>
+    </div>
+
+    <div class="slot-container"></div>
+    
+    <div id="card-output-area">
+        </div>
+
+    <script>
+        let cardZIndex = 100;
+
+        function printCard() {
+            const textInput = document.getElementById('textInput');
+            const text = textInput.value.trim();
+            const outputArea = document.getElementById('card-output-area');
+            const statusText = document.getElementById('statusText');
+            const btn = document.querySelector('.print-btn');
+
+            if (!text) {
+                textInput.placeholder = "ERROR: EMPTY INPUT";
+                setTimeout(() => textInput.placeholder = "INPUT MESSAGE...", 2000);
+                return;
+            }
+
+            statusText.classList.add('active');
+            btn.disabled = true;
+            btn.innerText = "BUSY";
+
+            // 创建卡片主体
+            const card = document.createElement('div');
+            card.classList.add('retro-card');
+            
+            // 随机应用一种样式变体 (1, 2, 或 3)
+            const styleVariant = Math.floor(Math.random() * 3) + 1;
+            card.classList.add(`card-style-${styleVariant}`);
+
+            // 随机初始微小旋转角度 (-5 到 5 度)，增加自然感
+            const initialRotation = Math.random() * 10 - 5;
+
+            // 创建内容区域
+            const contentDiv = document.createElement('div');
+            contentDiv.classList.add('card-content');
+            // 将换行符替换为 <br> 并用像素字体包裹英文，普通字体包裹中文
+            contentDiv.innerHTML = formatPixelText(text.replace(/\n/g, '<br>'));
+            card.appendChild(contentDiv);
+
+            // 创建旋转手柄
+            const handle = document.createElement('div');
+            handle.classList.add('rotate-handle');
+            handle.innerText = '↻';
+            card.appendChild(handle);
+            
+            cardZIndex++;
+            card.style.zIndex = cardZIndex;
+
+            outputArea.appendChild(card);
+
+            // 触发打印动画
+            card.classList.add('printing');
+
+            card.addEventListener('animationend', () => {
+                card.classList.remove('printing');
+                // 动画结束后设定初始位置和旋转
+                card.style.top = '60px'; 
+                setTransform(card, 0, 60, initialRotation);
+                
+                statusText.classList.remove('active');
+                btn.disabled = false;
+                btn.innerText = "PRINT";
+                textInput.value = '';
+
+                // 启用交互
+                makeInteractive(card, contentDiv, handle, 0, 60, initialRotation);
+            }, { once: true });
+        }
+
+        // 辅助函数：简单区分中英文应用不同字体样式（为了更好的像素感）
+        function formatPixelText(text) {
+            // 这是一个简单的正则替换，将连续的英文字符用 span 包裹以应用 Press Start 2P
+            // 中文则保留默认的 monospace 并通过 CSS 的 text-shadow 模拟像素感
+            return text.replace(/([a-zA-Z0-9\s\.,!?]+)/g, '<span style="font-family:\'Press Start 2P\'; font-size:0.8em;">$1</span>');
+        }
+
+
+        // --- 核心交互逻辑：拖拽与旋转 ---
+        function setTransform(el, x, y, deg) {
+            el.style.transform = `translate(${x}px, ${y}px) rotate(${deg}deg)`;
+            // 存储当前状态以便下次操作
+            el.dataset.x = x;
+            el.dataset.y = y;
+            el.dataset.angle = deg;
+        }
+
+        function makeInteractive(cardEl, moveHandleEl, rotateHandleEl, initialX, initialY, initialAngle) {
+            let isDragging = false;
+            let isRotating = false;
+            let startX, startY;
+            // 读取当前状态或使用初始值
+            let currentX = parseFloat(cardEl.dataset.x) || initialX;
+            let currentY = parseFloat(cardEl.dataset.y) || initialY;
+            let currentAngle = parseFloat(cardEl.dataset.angle) || initialAngle;
+            let startAngleOffset = 0;
+
+            // --- 移动逻辑 ---
+            moveHandleEl.addEventListener('pointerdown', (e) => {
+                e.stopPropagation(); // 防止触发旋转
+                isDragging = true;
+                cardEl.setPointerCapture(e.pointerId);
+                startX = e.clientX;
+                startY = e.clientY;
+                cardZIndex++;
+                cardEl.style.zIndex = cardZIndex;
+            });
+
+             // --- 旋转逻辑 ---
+            rotateHandleEl.addEventListener('pointerdown', (e) => {
+                e.stopPropagation();
+                isRotating = true;
+                rotateHandleEl.setPointerCapture(e.pointerId);
+                
+                // 计算点击点相对于卡片中心的角度
+                const rect = cardEl.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+                // 计算鼠标当前位置相对于中心的角度
+                const mouseAngle = Math.atan2(e.clientY - centerY, e.clientX - centerX) * (180 / Math.PI);
+                // 记录偏移量，防止旋转跳变
+                startAngleOffset = mouseAngle - currentAngle;
+                
+                cardZIndex++;
+                cardEl.style.zIndex = cardZIndex;
+            });
+
+
+            // --- 全局移动事件处理 ---
+            document.addEventListener('pointermove', (e) => {
+                if (isDragging) {
+                    const dx = e.clientX - startX;
+                    const dy = e.clientY - startY;
+                    currentX += dx;
+                    currentY += dy;
+                    setTransform(cardEl, currentX, currentY, currentAngle);
+                    startX = e.clientX;
+                    startY = e.clientY;
+                }
+                
+                if (isRotating) {
+                    const rect = cardEl.getBoundingClientRect();
+                    const centerX = rect.left + rect.width / 2;
+                    const centerY = rect.top + rect.height / 2;
+                    // 计算新的鼠标角度
+                    const newMouseAngle = Math.atan2(e.clientY - centerY, e.clientX - centerX) * (180 / Math.PI);
+                    // 应用偏移量得到新的卡片角度
+                    currentAngle = newMouseAngle - startAngleOffset;
+                    setTransform(cardEl, currentX, currentY, currentAngle);
+                }
+            });
+
+            // --- 结束交互 ---
+            document.addEventListener('pointerup', (e) => {
+                if (isDragging) {
+                    cardEl.releasePointerCapture(e.pointerId);
+                    isDragging = false;
+                }
+                if (isRotating) {
+                    rotateHandleEl.releasePointerCapture(e.pointerId);
+                    isRotating = false;
+                }
+            });
+        }
+
+    </script>
+</body>
+</html>
